@@ -3,7 +3,6 @@
 {
   
 }
-
 variables
 {
   const int wait_timeout=300;
