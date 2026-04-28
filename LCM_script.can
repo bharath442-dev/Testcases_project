@@ -1,0 +1,204 @@
+﻿/*@!Encoding:65001*/
+includes
+{
+  
+}
+
+variables
+{
+  int ignition_input;
+  int exterior_input;
+  int position_light;
+  int lowbeam_input;
+  int highbeam_input;
+  int hazard_input;
+  int hazard_blinking;
+  int direction_input;
+  int drl_light;
+  int wiper_input;
+  int direction_light_state;
+  mstimer left_direction_timer;
+  mstimer right_direction_timer;
+  msTimer Hazard_blink_timer;
+
+  
+  
+}
+
+on message Ignition_Message
+{
+   if(this.Ignition_input_signal==1)
+  {
+    ignition_input=1;
+    
+  }
+  else if(this.Ignition_input_signal==2)
+  {
+    ignition_input=2;
+  }
+  else if(this.Ignition_input_signal==3)
+  {
+    ignition_input=3;
+  }
+  else
+  {
+    ignition_input=0;
+  }
+}
+
+on message Exterior_Light_input
+{
+  if(this.Position_liht_input_signal==1)
+  {
+    
+   position_light=1;// global variable
+   @position_light_sysvar::position_light_sysvar=1;// sstem variable
+  }
+  else 
+  {
+    position_light=0;
+    @position_light_sysvar::position_light_sysvar=0;
+  }
+
+  if(this.Low_Beam_Switch_Input_Signal==1)
+  {
+    lowbeam_input=1;
+    @lowbeam_sysvar::lowbeam_sysvar=1;
+  }
+  else
+  {
+    lowbeam_input=0;
+    @lowbeam_sysvar::lowbeam_sysvar=0;
+  }
+  
+ if(this.High_Beam_Switch_Input_Signal==1)
+ {
+   highbeam_input=1;
+   @highbeam_sysvar::highbeam_sysvar=1;
+ }
+ else {
+   highbeam_input=0;
+   @highbeam_sysvar::highbeam_sysvar=0;
+ }
+   if(this.DRL_Switch_Input_Signal==1)
+  {
+    drl_light=1;
+    @DRL_sysvar::DRL_sysvar=1;
+   
+  }
+  else{
+    drl_light=0;
+    @DRL_sysvar::DRL_sysvar=0;
+  }
+  
+  if(this.Hazard_Lights_Signal==1)
+  {
+    hazard_input=1;
+    @Hazard_sysvar::Hazard_sysvar=1;
+   }
+  
+  else
+   {
+    hazard_input=0;
+    @Hazard_sysvar::Hazard_sysvar=0;
+  }
+  
+  if(this.Direction_Switch_Input_Signal==1)
+  {
+   direction_input=1;
+   @Direction_left_sysvar::Direction_left_sysvar=1;
+   @DRL_left::DRL_left=0;
+    //write("direction left");
+   }
+   else 
+   {
+      direction_input=0;
+     @Direction_left_sysvar::Direction_left_sysvar=0;
+     @DRL_left::DRL_left=1;
+   }
+    
+  if (this.Direction_Switch_Input_Signal==2)
+   {
+    direction_input=2;
+   @Direction_right_sysvar::Direction_right_sysvar=1;
+   @DRL_right::DRL_right=0;
+   // write("direction right");
+  }
+  else
+  {
+  direction_input=0;
+  @Direction_right_sysvar::Direction_right_sysvar=0;
+  @DRL_right::DRL_right=1;
+  //write("direction off");
+  }
+  
+  if(@Ignition_sysvar::Ignition_sysvar==0)
+  {
+    @DRL_left::DRL_left=0;
+    @DRL_right::DRL_right=0;
+    @lowbeam_sysvar::lowbeam_sysvar=0;
+    @highbeam_sysvar::highbeam_sysvar=0;
+    @position_light_sysvar::position_light_sysvar=0;
+    @DRL_sysvar::DRL_sysvar=0;
+    @head_Light::head_Light=0;
+    @Hazard_sysvar::Hazard_sysvar=0;
+    @Direction_sysvar::Direction_sysvar=0;
+    @Direction_left_sysvar::Direction_left_sysvar=0;
+    @Direction_right_sysvar::Direction_right_sysvar=0;
+  }
+  
+
+if(@Ignition_sysvar::Ignition_sysvar==1)
+{
+  if(@Hazard_sysvar::Hazard_sysvar==1)
+  {
+    @DRL_right::DRL_right=0;
+    @DRL_left::DRL_left=0;
+  
+    }
+}
+}
+on timer left_direction_timer {
+  if (@Ignition_sysvar::Ignition_sysvar == 1)
+  {
+    if(@Hazard_sysvar::Hazard_sysvar==1 || @Direction_sysvar::Direction_sysvar == 1) {
+    // Toggle left direction light state
+    
+    @Direction_left_sysvar::Direction_left_sysvar = (@Direction_left_sysvar::Direction_left_sysvar == 0) ? 1 : 0;
+  }
+  }
+}
+on timer right_direction_timer {
+  if (@Ignition_sysvar::Ignition_sysvar== 1 )
+  {
+  if(@Hazard_sysvar::Hazard_sysvar==1 || @Direction_sysvar::Direction_sysvar == 2) {
+    // Toggle right direction light state
+    @Direction_right_sysvar::Direction_right_sysvar = (@Direction_right_sysvar::Direction_right_sysvar == 0) ? 1 : 0;
+  }
+}
+}
+on timer Hazard_blink_timer
+{
+  if(@Ignition_sysvar::Ignition_sysvar==0 && @Direction_sysvar::Direction_sysvar==0){
+    
+  if(@Hazard_sysvar::Hazard_sysvar==1)
+  {
+    
+    @Direction_left_sysvar::Direction_left_sysvar=(@Direction_left_sysvar::Direction_left_sysvar==0)?1:0;
+    @Direction_right_sysvar::Direction_right_sysvar=(@Direction_right_sysvar::Direction_right_sysvar==0)?1:0;
+   
+  }
+  }
+}
+ 
+on start {
+  // Start the left direction light timer
+  setTimerCyclic(left_direction_timer, 500); // Adjust the time interval as needed
+  
+  // Start the right direction light timer
+  setTimerCyclic(right_direction_timer, 500); // Adjust the time interval as needed
+  
+  setTimerCyclic(Hazard_blink_timer, 500);
+
+}
+
